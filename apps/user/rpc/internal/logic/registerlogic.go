@@ -5,9 +5,10 @@ import (
 	"chat/pkg/ctxdata"
 	"chat/pkg/encrypt"
 	"chat/pkg/wuid"
+	"chat/pkg/xerr"
 	"context"
 	"database/sql"
-	"errors"
+	"github.com/pkg/errors"
 	"time"
 
 	"chat/apps/user/rpc/internal/svc"
@@ -17,7 +18,7 @@ import (
 )
 
 var (
-	ErrPhoneIsRegister = errors.New("手机号已经注册过")
+	ErrPhoneIsRegister = xerr.New(xerr.SERVER_COMMON_ERROR, "手机号已经注册过")
 )
 
 type RegisterLogic struct {
@@ -42,7 +43,7 @@ func (l *RegisterLogic) Register(in *user.RegisterReq) (*user.RegisterResp, erro
 	}
 
 	if userEntity != nil {
-		return nil, ErrPhoneIsRegister
+		return nil, errors.WithStack(ErrPhoneIsRegister)
 	}
 
 	userEntity = &models.Users{
@@ -60,7 +61,7 @@ func (l *RegisterLogic) Register(in *user.RegisterReq) (*user.RegisterResp, erro
 	if len(in.Password) > 0 {
 		genPassword, err := encrypt.GenPasswordHash([]byte(in.Password))
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrapf(xerr.NewInternalErr(), "encrypt password failed: %v", err)
 		}
 		// 通过构造sql空对象插入数据库中
 		userEntity.Password = sql.NullString{
@@ -71,7 +72,7 @@ func (l *RegisterLogic) Register(in *user.RegisterReq) (*user.RegisterResp, erro
 
 	_, err = l.svcCtx.UsersModel.Insert(l.ctx, userEntity)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(xerr.NewDBErr(), "db insert err %v", err)
 	}
 
 	// 生成token
@@ -79,7 +80,7 @@ func (l *RegisterLogic) Register(in *user.RegisterReq) (*user.RegisterResp, erro
 	token, err := ctxdata.GetJwtToken(l.svcCtx.Config.Jwt.AccessSecret, now, l.svcCtx.Config.Jwt.AccessExpire,
 		userEntity.Id)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(xerr.NewInternalErr(), "ctxdata get jwt token err %v", err)
 	}
 
 	return &user.RegisterResp{

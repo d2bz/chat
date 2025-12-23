@@ -2,8 +2,10 @@ package logic
 
 import (
 	"chat/apps/user/models"
+	"chat/pkg/xerr"
 	"context"
 	"github.com/jinzhu/copier"
+	"github.com/pkg/errors"
 
 	"chat/apps/user/rpc/internal/svc"
 	"chat/apps/user/rpc/user"
@@ -43,13 +45,13 @@ func (l *FindUserLogic) FindUser(in *user.FindUserReq) (*user.FindUserResp, erro
 	}
 
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(xerr.NewDBErr(), "FindUser failed. in:%+v, err:%v", in, err)
 	}
 	var resp []*user.UserEntity
 	// copier.Copy处理结构体切片，(&目标切片，&源切片)
 	err = copier.Copy(&resp, &userEntities)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(xerr.NewInternalErr(), "copy struct err: %v", err)
 	}
 
 	return &user.FindUserResp{

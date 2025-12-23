@@ -2,9 +2,10 @@ package logic
 
 import (
 	"chat/apps/user/models"
+	"chat/pkg/xerr"
 	"context"
-	"errors"
 	"github.com/jinzhu/copier"
+	"github.com/pkg/errors"
 
 	"chat/apps/user/rpc/internal/svc"
 	"chat/apps/user/rpc/user"
@@ -12,7 +13,7 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
-var ErrUserNotFound = errors.New("该用户不存在")
+var ErrUserNotFound = xerr.New(xerr.SERVER_COMMON_ERROR, "该用户不存在")
 
 type GetUserInfoLogic struct {
 	ctx    context.Context
@@ -29,14 +30,13 @@ func NewGetUserInfoLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetUs
 }
 
 func (l *GetUserInfoLogic) GetUserInfo(in *user.GetUserInfoReq) (*user.GetUserInfoResp, error) {
-	// todo: add your logic here and delete this line
 
 	userEntity, err := l.svcCtx.UsersModel.FindOne(l.ctx, in.Id)
 	if err != nil {
 		if errors.Is(err, models.ErrNotFound) {
-			return nil, ErrUserNotFound
+			return nil, errors.WithStack(ErrUserNotFound)
 		}
-		return nil, err
+		return nil, errors.Wrapf(xerr.NewDBErr(), "find user by id err: %v", err)
 	}
 
 	var resp user.UserEntity
@@ -45,7 +45,7 @@ func (l *GetUserInfoLogic) GetUserInfo(in *user.GetUserInfoReq) (*user.GetUserIn
 	// Copy(&目标, &源)
 	err = copier.Copy(&resp, userEntity)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(xerr.NewInternalErr(), "copy struct err: %v", err)
 	}
 
 	return &user.GetUserInfoResp{
