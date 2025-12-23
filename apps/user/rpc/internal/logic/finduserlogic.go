@@ -1,7 +1,9 @@
 package logic
 
 import (
+	"chat/apps/user/models"
 	"context"
+	"github.com/jinzhu/copier"
 
 	"chat/apps/user/rpc/internal/svc"
 	"chat/apps/user/rpc/user"
@@ -24,7 +26,33 @@ func NewFindUserLogic(ctx context.Context, svcCtx *svc.ServiceContext) *FindUser
 }
 
 func (l *FindUserLogic) FindUser(in *user.FindUserReq) (*user.FindUserResp, error) {
-	// todo: add your logic here and delete this line
+	var (
+		userEntities []*models.Users
+		err          error
+	)
 
-	return &user.FindUserResp{}, nil
+	if in.Phone != "" {
+		userEntity, err := l.svcCtx.UsersModel.FindByPhone(l.ctx, in.Phone)
+		if err == nil {
+			userEntities = append(userEntities, userEntity)
+		}
+	} else if in.Name != "" {
+		userEntities, err = l.svcCtx.UsersModel.ListByName(l.ctx, in.Name)
+	} else if len(in.Ids) > 0 {
+		userEntities, err = l.svcCtx.UsersModel.ListByIds(l.ctx, in.Ids)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	var resp []*user.UserEntity
+	// copier.Copy处理结构体切片，(&目标切片，&源切片)
+	err = copier.Copy(&resp, &userEntities)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user.FindUserResp{
+		User: resp,
+	}, nil
 }
