@@ -1,7 +1,10 @@
 package logic
 
 import (
+	"chat/pkg/xerr"
 	"context"
+	"github.com/jinzhu/copier"
+	"github.com/pkg/errors"
 
 	"chat/apps/social/rpc/internal/svc"
 	"chat/apps/social/rpc/social"
@@ -23,8 +26,17 @@ func NewFriendPutInListLogic(ctx context.Context, svcCtx *svc.ServiceContext) *F
 	}
 }
 
+// 获取未处理的好友申请列表
 func (l *FriendPutInListLogic) FriendPutInList(in *social.FriendPutInListReq) (*social.FriendPutInListResp, error) {
-	// todo: add your logic here and delete this line
+	friendReqList, err := l.svcCtx.FriendRequestsModel.ListNoHandler(l.ctx, in.UserId)
+	if err != nil {
+		return nil, errors.Wrapf(xerr.NewDBErr(), "find list friend req err %v req %v", err, in.UserId)
+	}
 
-	return &social.FriendPutInListResp{}, nil
+	var resp []*social.FriendRequests
+	copier.Copy(&resp, &friendReqList)
+
+	return &social.FriendPutInListResp{
+		List: resp,
+	}, nil
 }

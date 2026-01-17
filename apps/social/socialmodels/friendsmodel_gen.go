@@ -32,6 +32,7 @@ type (
 		Inserts(ctx context.Context, session sqlx.Session, data ...*Friends) (sql.Result, error)
 		FindOne(ctx context.Context, id uint64) (*Friends, error)
 		FindByUidAndFid(ctx context.Context, uid, fid string) (*Friends, error)
+		ListByUserid(ctx context.Context, userId string) ([]*Friends, error)
 		Update(ctx context.Context, data *Friends) error
 		Delete(ctx context.Context, id uint64) error
 	}
@@ -95,6 +96,19 @@ func (m *defaultFriendsModel) FindByUidAndFid(ctx context.Context, uid, fid stri
 		return &resp, nil
 	case sqlc.ErrNotFound:
 		return nil, ErrNotFound
+	default:
+		return nil, err
+	}
+}
+
+func (m *defaultFriendsModel) ListByUserid(ctx context.Context, userId string) ([]*Friends, error) {
+	query := fmt.Sprintf("select %s from %s where `user_id` = ? ", friendsRows, m.table)
+
+	var resp []*Friends
+	err := m.QueryRowsNoCacheCtx(ctx, &resp, query, userId)
+	switch err {
+	case nil:
+		return resp, nil
 	default:
 		return nil, err
 	}
