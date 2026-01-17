@@ -1,10 +1,9 @@
 package logic
 
 import (
-	"context"
-
 	"chat/apps/social/rpc/internal/svc"
 	"chat/apps/social/rpc/social"
+	"context"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -25,6 +24,5 @@ func NewGroupPutInHandleLogic(ctx context.Context, svcCtx *svc.ServiceContext) *
 
 func (l *GroupPutInHandleLogic) GroupPutInHandle(in *social.GroupPutInHandleReq) (*social.GroupPutInHandleResp, error) {
 	// todo: add your logic here and delete this line
-
 	return &social.GroupPutInHandleResp{}, nil
 }
