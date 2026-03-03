@@ -16,5 +16,5 @@ docker pull ${reso_addr}:${tag}
 
 
 # 如果需要指定配置文件的
-# docker run -p 10001:8080 --network imooc_sai-im -v /sai-im/config/user-rpc:/user/conf/ --name=${container_name} -d ${reso_addr}:${tag}
+# -e POD_IP=${pod_idb} 是用来在容器内设置一个名为 POD_IP 的环境变量，用于etcd配置
 docker run -p 10000:10000 -e POD_IP=${pod_idb} --name=${container_name} -d ${reso_addr}:${tag}
