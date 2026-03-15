@@ -3,3 +3,7 @@ ListenOn: 0.0.0.0:10090
 
 JwtAuth:
   AccessSecret: perfric_chat
+
+Mongo:
+  Url: "mongodb://root:chat@192.168.117.24:47017"
+  Db: chat

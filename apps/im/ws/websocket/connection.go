@@ -9,6 +9,7 @@ import (
 
 type Conn struct {
 	idleMu sync.Mutex
+	Uid    string
 	*websocket.Conn
 	s                 *Server
 	idle              time.Time //最近一次进入“空闲状态”的时间

@@ -9,4 +9,8 @@ type Config struct {
 	JwtAuth  struct {
 		AccessSecret string
 	}
+	Mongo struct {
+		Url string
+		Db  string
+	}
 }

@@ -68,6 +68,9 @@ func (s *Server) ServerWs(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handlerConn(conn *Conn) {
+	uids := s.GetUsers(conn)
+	conn.Uid = uids[0]
+
 	for {
 		// 获取请求消息
 		_, msg, err := conn.ReadMessage()
