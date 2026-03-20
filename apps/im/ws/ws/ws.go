@@ -19,4 +19,16 @@ type (
 		SendTime           int64  `mapstructure:"sendTime"`
 		Msg                `mapstructure:"msg"`
 	}
+
+	// 用于定义接收客户端传入的消息体结构
+	Push struct {
+		ConversationId     string `mapstructure:"conversationId"`
+		constants.ChatType `mapstructure:"chatType"`
+		SendId             string `mapstructure:"sendId"`
+		RecvId             string `mapstructure:"recvId"`
+		SendTime           int64  `mapstructure:"sendTime"`
+
+		constants.MType `mapstructure:"mType"`
+		Content         string `mapstructure:"content"`
+	}
 )

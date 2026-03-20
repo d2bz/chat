@@ -20,7 +20,7 @@ type client struct {
 	opt dailOption
 }
 
-func NewClient(host string, opts ...DailOptions) *client {
+func NewClient(host string, opts ...DailOptions) Client {
 	opt := newDailOptions(opts...)
 
 	c := client{

@@ -10,3 +10,15 @@ MsgChatTransfer:
   Topic: msgChatTransfer
   Offset: first
   Consumers: 1
+
+Redisx:
+  Host: 192.168.117.24:16379
+  Type: node
+  Pass: chat
+
+Mongo:
+  Url: "mongodb://root:chat@192.168.117.24:47017"
+  Db: chat
+
+Ws:
+  Host: 127.0.0.1:10090

@@ -1,14 +1,12 @@
 package conversation
 
 import (
-	"chat/apps/im/ws/internal/logic"
 	"chat/apps/im/ws/internal/svc"
 	"chat/apps/im/ws/websocket"
 	"chat/apps/im/ws/ws"
+	"chat/apps/task/mq/mq"
 	"chat/pkg/constants"
-	"context"
 	"github.com/mitchellh/mapstructure"
-	"time"
 )
 
 func Chat(svc *svc.ServiceContext) websocket.HandlerFunc {
@@ -22,20 +20,19 @@ func Chat(svc *svc.ServiceContext) websocket.HandlerFunc {
 
 		switch data.ChatType {
 		case constants.SingleChatType:
-			err := logic.NewConversation(context.Background(), srv, svc).SingleChat(&data, conn.Uid)
+			err := svc.MsgChatTransferClient.Push(&mq.MsgChatTransfer{
+				ConversationId: data.ConversationId,
+				ChatType:       data.ChatType,
+				SendId:         data.SendId,
+				RecvId:         data.RecvId,
+				SendTime:       data.SendTime,
+				MType:          data.MType,
+				Content:        data.Content,
+			})
 			if err != nil {
 				srv.Send(websocket.NewErrMessage(err), conn)
 				return
 			}
-
-			srv.SendByUserId(websocket.NewMessage(conn.Uid, ws.Chat{
-				ConversationId: data.ConversationId,
-				ChatType:       data.ChatType,
-				SendId:         conn.Uid,
-				RecvId:         data.RecvId,
-				SendTime:       time.Now().UnixMilli(),
-				Msg:            data.Msg,
-			}), data.RecvId)
 		}
 	}
 }
