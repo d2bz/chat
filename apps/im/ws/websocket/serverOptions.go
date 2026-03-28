@@ -8,6 +8,9 @@ type serverOption struct {
 	Authentication
 	pattern string
 
+	ack        AckType
+	ackTimeout time.Duration
+
 	maxConnectionIdle time.Duration
 }
 
