@@ -7,6 +7,9 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// 读取消息时默认读取100条
+var DefaultChatLogLimit int64 = 100
+
 type ChatLog struct {
 	ID primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 
