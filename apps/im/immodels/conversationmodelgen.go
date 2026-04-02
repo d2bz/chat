@@ -48,7 +48,7 @@ func (m *defaultConversationModel) FindOne(ctx context.Context, id string) (*Con
 
 	var data Conversation
 
-	err = m.conn.FindOne(ctx, &data, bson.M{"_id": oid})
+	err = m.conn.FindOne(ctx, &data, bson.M{"conversationId": oid})
 	switch err {
 	case nil:
 		return &data, nil
