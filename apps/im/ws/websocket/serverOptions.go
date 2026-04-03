@@ -12,6 +12,9 @@ type serverOption struct {
 	ackTimeout time.Duration
 
 	maxConnectionIdle time.Duration
+
+	// 设置并发发送数据的量级
+	concurrency int
 }
 
 func newServerOptions(opts ...ServerOptions) serverOption {
@@ -20,12 +23,20 @@ func newServerOptions(opts ...ServerOptions) serverOption {
 		Authentication:    new(authentication),
 		pattern:           "/ws",
 		maxConnectionIdle: defaultMaxConnectionIdle,
+		ackTimeout:        defaultAckTimeout,
+		concurrency:       defaultConCurrency,
 	}
 	// 加载自定义配置
 	for _, opt := range opts {
 		opt(&o)
 	}
 	return o
+}
+
+func WithServerAck(ack AckType) ServerOptions {
+	return func(opt *serverOption) {
+		opt.ack = ack
+	}
 }
 
 func WithAuthentication(authentication Authentication) ServerOptions {

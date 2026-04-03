@@ -20,5 +20,12 @@ Mongo:
   Url: "mongodb://root:chat@192.168.117.24:47017"
   Db: chat
 
+SocialRpc:
+  Etcd:
+    Hosts:
+      - 192.168.117.24:3379
+    Key: social.rpc
+
+
 Ws:
   Host: 127.0.0.1:10090
