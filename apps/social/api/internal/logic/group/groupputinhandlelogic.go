@@ -1,7 +1,9 @@
 package group
 
 import (
+	"chat/apps/im/rpc/imclient"
 	"chat/apps/social/rpc/socialclient"
+	"chat/pkg/constants"
 	"chat/pkg/ctxdata"
 	"context"
 	"strconv"
@@ -36,11 +38,24 @@ func (l *GroupPutInHandleLogic) GroupPutInHandle(req *types.GroupPutInHandleReq)
 		return nil, err
 	}
 
-	_, err = l.svcCtx.Social.GroupPutInHandle(l.ctx, &socialclient.GroupPutInHandleReq{
+	res, err := l.svcCtx.Social.GroupPutInHandle(l.ctx, &socialclient.GroupPutInHandleReq{
 		GroupReqId:   int32(groupReqId),
 		GroupId:      req.GroupId,
 		HandleUid:    uid,
 		HandleResult: req.HandleResult,
+	})
+
+	if res.GroupId == "" {
+		return
+	}
+	if constants.HandlerResult(req.HandleResult) != constants.PassHandlerResult {
+		return
+	}
+
+	_, err = l.svcCtx.SetUpUserConversation(l.ctx, &imclient.SetUpUserConversationReq{
+		SendId:   uid,
+		RecvId:   res.GroupId,
+		ChatType: int32(constants.GroupChatType),
 	})
 
 	return nil, err

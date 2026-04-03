@@ -1,6 +1,7 @@
 package svc
 
 import (
+	"chat/apps/im/rpc/imclient"
 	"chat/apps/social/api/internal/config"
 	"chat/apps/social/api/internal/middleware"
 	"chat/apps/social/rpc/socialclient"
@@ -14,8 +15,9 @@ type ServiceContext struct {
 	LimitMiddleware       rest.Middleware
 	IdempotenceMiddleware rest.Middleware
 
-	Social socialclient.Social
-	User   userclient.User
+	socialclient.Social
+	userclient.User
+	imclient.Im
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -26,5 +28,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 
 		Social: socialclient.NewSocial(zrpc.MustNewClient(c.SocialRpc)),
 		User:   userclient.NewUser(zrpc.MustNewClient(c.UserRpc)),
+		Im:     imclient.NewIm(zrpc.MustNewClient(c.ImRpc)),
 	}
 }

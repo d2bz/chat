@@ -1,6 +1,7 @@
 package group
 
 import (
+	"chat/apps/im/rpc/imclient"
 	"chat/apps/social/rpc/socialclient"
 	"chat/pkg/ctxdata"
 	"context"
@@ -42,6 +43,12 @@ func (l *CreateGroupLogic) CreateGroup(req *types.GroupCreateReq) (resp *types.G
 	if res.Id == "" {
 		return nil, err
 	}
+
+	// 群创建成功，建立与创建者的会话
+	_, err = l.svcCtx.CreateGroupConversation(l.ctx, &imclient.CreateGroupConversationReq{
+		GroupId:  res.Id,
+		CreateId: uid,
+	})
 
 	return nil, err
 }
