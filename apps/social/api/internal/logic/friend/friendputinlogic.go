@@ -37,6 +37,4 @@ func (l *FriendPutInLogic) FriendPutIn(req *types.FriendPutInReq) (resp *types.F
 	})
 
 	return
-
-	return
 }
