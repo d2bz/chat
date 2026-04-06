@@ -17,3 +17,11 @@ const (
 	// 私聊
 	SingleChatType
 )
+
+// ContentType 内容类型
+type ContentType int
+
+const (
+	ContentChatMsg  ContentType = iota // 聊天
+	ContentMakeRead                    // 已读记录
+)

@@ -9,7 +9,7 @@ func NewBitmap(size int) *Bitmap {
 	if size == 0 {
 		size = 250 // 默认大小为250
 	}
-	//✨ [0,0,0,0][0,0,0,0] 每个byte中有8个bit
+	//  [0,0,0,0][0,0,0,0] 每个byte中有8个bit
 	return &Bitmap{
 		// 指定有size个byte
 		bits: make([]byte, size),
@@ -27,7 +27,7 @@ func (b *Bitmap) Set(id string) {
 	bitIdx := idx % 8
 
 	// 将00000001向左移动bitIdx位：结果是一个掩码，只有第 bitIdx 位是1，其余位都是0
-	//✨再位或运算：通过位或的方式来设置为1
+	// 再位或运算：通过位或的方式来设置为1
 	b.bits[byteIdx] |= 1 << bitIdx
 }
 
