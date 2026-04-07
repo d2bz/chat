@@ -1,0 +1,160 @@
+package msgTransfer
+
+import (
+	"chat/apps/im/ws/ws"
+	"chat/pkg/constants"
+	"github.com/zeromicro/go-zero/core/logx"
+	"sync"
+	"time"
+)
+
+type groupMsgRead struct {
+	mu sync.Mutex
+
+	conversationId string // 会话ID
+
+	push     *ws.Push      // 维护一条待推送消息，通过更新该消息的已读列表来达成合并的效果
+	pushChan chan *ws.Push // 推送用户合并消息的通道，来自上层传递
+
+	count    int       // 计数
+	pushTime time.Time // 上次推送时间
+
+	done chan struct{}
+}
+
+func newGroupMsgRead(push *ws.Push, pushChan chan *ws.Push) *groupMsgRead {
+	m := &groupMsgRead{
+		conversationId: push.ConversationId,
+		push:           push,
+		pushChan:       pushChan,
+		count:          1,
+		pushTime:       time.Now(),
+		done:           make(chan struct{}),
+	}
+
+	go m.transfer()
+
+	return m
+}
+
+// mergePush 合并消息
+func (g *groupMsgRead) mergePush(push *ws.Push) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	// 说明已经被清理，重新设置
+	if g.push == nil {
+		g.push = push
+	}
+
+	g.count++
+	for msgId, read := range push.ReadRecords {
+		// 如果存在相同消息，进行替换即可
+		// 原因：msgReadTransfer中对于已读消息的处理，是在原来的基础上进行更改，所以我们只需要记录就可以覆盖了
+		// 在被合并之前，消息已通过UpdateChatLogRead将已读列表更新至最新，用最新状态覆盖旧状态
+		g.push.ReadRecords[msgId] = read
+	}
+}
+
+// 循环检查是否到达了发送标准，与websocket中的心跳检测机制相似
+func (g *groupMsgRead) transfer() {
+	// 超时发送
+	timer := time.NewTimer(GroupMsgReadRecordDelayTime / 2)
+	defer timer.Stop()
+	for {
+		select {
+		case <-g.done:
+			return
+		case <-timer.C:
+			g.mu.Lock()
+			// 获取上一次推送时间
+			lastPushTime := g.pushTime
+			
+			val := GroupMsgReadRecordDelayTime - time.Since(lastPushTime)
+			// 得到待推送的数据
+			push := g.push
+			// 当前没有超时且没有超过最大计数，或数据为空
+			if val > 0 && g.count < GroupMsgReadRecordDelayCount || push == nil {
+				// 重置定时器
+				if val > 0 {
+					timer.Reset(val)
+				}
+				// 未达标
+				g.mu.Unlock()
+				continue
+			}
+			// 达标
+			g.pushTime = time.Now()
+			g.push = nil
+			g.count = 0
+			timer.Reset(GroupMsgReadRecordDelayTime / 2)
+			g.mu.Unlock()
+			// 推送
+			logx.Infof("merge push delay time condition reached, push: %v ", push)
+			g.pushChan <- push
+		default:
+			g.mu.Lock()
+			// 消息数量达到最大值
+			if g.count >= GroupMsgReadRecordDelayCount {
+				// 达标，推送
+				// 得到待推送的数据
+				push := g.push
+				g.push = nil
+				g.count = 0
+				g.mu.Unlock()
+				// 推送
+				logx.Infof("merge push max delay count condition reached, push: %v ", push)
+				g.pushChan <- push
+				continue
+			}
+			// 没有达到最大值，判断当前运行状态是否为空
+			if g.isIdle() {
+				g.mu.Unlock()
+				// 使得 msgReadTransfer 释放
+				g.pushChan <- &ws.Push{
+					ChatType:       constants.GroupChatType,
+					ConversationId: g.conversationId,
+				}
+				continue
+			}
+			// 默认检测时，发现合并后的消息没有问题，且当前状态为活跃状态
+			// 则设置默认的延迟时间缓一下
+			g.mu.Unlock()
+			// 睡眠等待一段时间，最大为一秒钟
+			tempDelay := GroupMsgReadRecordDelayTime / 4
+			if tempDelay > time.Second {
+				tempDelay = time.Second
+			}
+			time.Sleep(tempDelay)
+		}
+	}
+}
+
+// IsIdle 判断是否为活跃状态
+func (g *groupMsgRead) IsIdle() bool {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	return g.isIdle()
+}
+
+func (g *groupMsgRead) isIdle() bool {
+	// 获取上一次推送时间
+	lastPushTime := g.pushTime
+	// *2的原因：防止在推送时刻由于阻塞未推送，给消费者延长时间，作为检测的空闲时间
+	val := GroupMsgReadRecordDelayTime*2 - time.Since(lastPushTime)
+
+	if val <= 0 && g.push == nil && g.count == 0 {
+		return true
+	}
+	return false
+}
+
+func (m *groupMsgRead) Clear() {
+	select {
+	case <-m.done:
+	default:
+		close(m.done)
+	}
+
+	m.push = nil
+}
