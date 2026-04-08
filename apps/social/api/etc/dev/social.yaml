@@ -20,5 +20,10 @@ ImRpc:
       - 106.14.194.111:3379
     Key: im.rpc
 
+Redisx:
+  Host: 106.14.194.111:16379
+  Type: node
+  Pass: chat
+
 JwtAuth:
   AccessSecret: perfric_chat
