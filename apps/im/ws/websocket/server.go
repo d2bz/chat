@@ -53,13 +53,17 @@ func NewServer(addr string, opts ...ServerOptions) *Server {
 	opt := newServerOptions(opts...)
 
 	return &Server{
-		routes:         make(map[string]HandlerFunc),
-		opt:            &opt,
-		addr:           addr,
-		pattern:        opt.pattern,
-		connToUser:     make(map[*Conn]string),
-		userToConn:     make(map[string]*Conn),
-		upgrader:       websocket.Upgrader{},
+		routes:     make(map[string]HandlerFunc),
+		opt:        &opt,
+		addr:       addr,
+		pattern:    opt.pattern,
+		connToUser: make(map[*Conn]string),
+		userToConn: make(map[string]*Conn),
+		upgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		},
 		authentication: opt.Authentication,
 		Logger:         logx.WithContext(context.Background()),
 
@@ -109,9 +113,10 @@ func (s *Server) handlerConn(conn *Conn) {
 		// 获取请求消息
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
-			s.Errorf("server read message err: %v", err)
-			s.Close(conn)
-			return
+			//s.Errorf("server read message err: %v", err)
+			//s.Close(conn)
+			//return
+			continue
 		}
 		// 解析消息
 		var message Message

@@ -81,7 +81,7 @@ func main() {
 
 // Run 启动一个 go-zero 的 REST API 服务，server.Start() 内部阻塞运行
 func Run(c config.Config) {
-	server := rest.MustNewServer(c.RestConf)
+	server := rest.MustNewServer(c.RestConf, rest.WithCors())
 	defer server.Stop()
 
 	ctx := svc.NewServiceContext(c)

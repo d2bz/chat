@@ -25,6 +25,12 @@ func NewJwtAuth(svc *svc.ServiceContext) *JwtAuth {
 }
 
 func (j *JwtAuth) Auth(w http.ResponseWriter, r *http.Request) bool {
+	// 前端建立websocket连接时无法直接将token写到header里，会以子协议的方式携带
+	// 这里将子协议里的token写入Authorization，方便后续解析
+	if tok := r.Header.Get("sec-websocket-protocol"); tok != "" {
+		r.Header.Set("Authorization", tok)
+	}
+
 	tok, err := j.parser.ParseToken(r, j.svc.Config.JwtAuth.AccessSecret, "")
 	if err != nil {
 		j.Errorf("parse token err: %v", err)
