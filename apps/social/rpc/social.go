@@ -1,6 +1,7 @@
 package main
 
 import (
+	"chat/pkg/interceptor"
 	"chat/pkg/interceptor/rpcserver"
 	"flag"
 	"fmt"
@@ -36,6 +37,7 @@ func main() {
 	defer s.Stop()
 
 	s.AddUnaryInterceptors(rpcserver.LogInterceptor)
+	s.AddUnaryInterceptors(interceptor.NewIdempotenceServer(interceptor.NewDefaultIdempotent(c.Cache[0].RedisConf)))
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
 	s.Start()
