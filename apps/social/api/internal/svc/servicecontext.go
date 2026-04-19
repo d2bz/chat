@@ -14,8 +14,8 @@ import (
 )
 
 type ServiceContext struct {
-	Config config.Config
-	//LimitMiddleware       rest.Middleware
+	Config                config.Config
+	LimitMiddleware       rest.Middleware
 	IdempotenceMiddleware rest.Middleware
 
 	socialclient.Social
@@ -27,8 +27,8 @@ type ServiceContext struct {
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	return &ServiceContext{
-		Config: c,
-		//LimitMiddleware:       middleware.NewLimitMiddleware().Handle,
+		Config:                c,
+		LimitMiddleware:       middleware.NewLimitMiddleware(c.Redisx).TokenLimitHandler(1, 10),
 		IdempotenceMiddleware: middleware.NewIdempotenceMiddleware().Handle,
 
 		Social: socialclient.NewSocial(zrpc.MustNewClient(c.SocialRpc,
