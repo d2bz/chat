@@ -163,6 +163,63 @@ services:
     networks:
       chat:
 
+  elasticsearch:
+    image: elasticsearch:7.17.4
+    volumes:
+      - /etc/localtime:/etc/localtime
+      # 需要对/components/elasticsearch/data增加使用权限，不然会出现错误信息
+      - ./components/elasticsearch/data:/usr/share/elasticsearch/data
+    ports:
+      - '9200:9200'
+      - '9300:9300'
+    container_name: elasticsearch
+    restart: always
+    environment:
+      - 'cluster.name=elasticsearch'
+      - 'discovery.type=single-node'
+      - 'ES_JAVA_OPTS=-Xms1024m -Xmx1024m'
+    networks:
+      chat:
+
+  kibana:
+    image: kibana:7.17.4
+    container_name: kibana
+    restart: always
+    volumes:
+      - /etc/localtime:/etc/localtime
+      # 注意配置路径
+      - ./components/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml
+    ports:
+      - '5601:5601'
+    # 启动时与 elasticsearch 进行连接
+    links:
+      - elasticsearch
+    depends_on:
+      - elasticsearch
+    networks:
+      chat:
+
+  logstash:
+    image: logstash:7.17.4
+    container_name: logstash
+    restart: always
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - ./components/mysql/data/c9d9e4253b72-slow.log:/var/logs/mysql-slow.log
+      - ./components/apisix/logs:/var/logs/apisix
+      # 注意配置路径
+      - ./components/logstash/pipeline:/usr/share/logstash/pipeline
+    ports:
+      - '5044:5044'
+      - '50000:50000/tcp'
+      - '50000:50000/udp'
+      - '9600:9600'
+    links:
+      - elasticsearch
+    depends_on:
+      - elasticsearch
+    networks:
+      chat:
 
 networks:
   chat:
